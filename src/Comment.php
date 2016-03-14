@@ -1,5 +1,8 @@
 <?php
 
+namespace App;
+
+use PDO;
 class Comment {
     
     public function __construct($config) {

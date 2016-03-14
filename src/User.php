@@ -1,5 +1,9 @@
 <?php
 
+namespace App;
+
+use PDO;
+
 class User {
     
     public $db;
@@ -69,7 +73,7 @@ class User {
             </form>
         ';
         
-        require_once 'layout.phtml';
+        require_once 'templates/layout.phtml';
         
     }
     
@@ -114,7 +118,7 @@ class User {
             <input type="submit" name="updatepw" value="Create User" />
         </form>';
         
-        require_once 'layout.phtml';
+        require_once 'templates/layout.phtml';
     }
     
     public function login() {
@@ -149,7 +153,7 @@ class User {
             </form>
         ';
         
-        require_once('layout.phtml');
+        require_once('templates/layout.phtml');
         
     }
     
