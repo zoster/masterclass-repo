@@ -1,12 +1,6 @@
 <?php
 
-function dd($string) {
-    print $string;
-    die;
-}
-
 session_start();
-
 
 $config = require_once('../config.php');
 require_once '../vendor/autoload.php';
