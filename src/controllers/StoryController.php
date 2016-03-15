@@ -2,46 +2,45 @@
 
 namespace App\Controllers;
 
-use PDO;
+use App\Exceptions\StoryNotFoundException;
+use App\Models\Story;
+use App\Models\Comment;
 
-class StoryController {
-    
-    public function __construct($config) {
-        $dbconfig = $config['database'];
-        $dsn = 'mysql:host=' . $dbconfig['host'] . ';dbname=' . $dbconfig['name'];
-        $this->db = new PDO($dsn, $dbconfig['user'], $dbconfig['pass']);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+class StoryController
+{
+
+    protected $storyModel;
+    protected $commentModel;
+
+    public function __construct($config)
+    {
+        $this->storyModel   = new Story($config);
+        $this->commentModel = new Comment($config);
     }
-    
-    public function index() {
-        if(!isset($_GET['id'])) {
+
+    public function index()
+    {
+        if (!isset($_GET['id'])) {
             header("Location: /");
             exit;
         }
-        
-        $story_sql = 'SELECT * FROM story WHERE id = ?';
-        $story_stmt = $this->db->prepare($story_sql);
-        $story_stmt->execute(array($_GET['id']));
-        if($story_stmt->rowCount() < 1) {
+
+        try {
+            $story = $this->storyModel->show((int)$_GET['id']);
+        } catch (StoryNotFoundException $e) {
             header("Location: /");
             exit;
         }
-        
-        $story = $story_stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $comment_sql = 'SELECT * FROM comment WHERE story_id = ?';
-        $comment_stmt = $this->db->prepare($comment_sql);
-        $comment_stmt->execute(array($story['id']));
-        $comment_count = $comment_stmt->rowCount();
-        $comments = $comment_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $comments = $this->commentModel->byStory($story['id']);
 
         $content = '
             <a class="headline" href="' . $story['url'] . '">' . $story['headline'] . '</a><br />
-            <span class="details">' . $story['created_by'] . ' | ' . $comment_count . ' Comments | 
+            <span class="details">' . $story['created_by'] . ' | ' . count($comments) . ' Comments |
             ' . date('n/j/Y g:i a', strtotime($story['created_on'])) . '</span>
         ';
-        
-        if(isset($_SESSION['AUTHENTICATED'])) {
+
+        if (isset($_SESSION['AUTHENTICATED'])) {
             $content .= '
             <form method="post" action="/comment/create">
             <input type="hidden" name="story_id" value="' . $_GET['id'] . '" />
@@ -50,45 +49,45 @@ class StoryController {
             </form>            
             ';
         }
-        
-        foreach($comments as $comment) {
+
+        foreach ($comments as $comment) {
             $content .= '
                 <div class="comment"><span class="comment_details">' . $comment['created_by'] . ' | ' .
-                date('n/j/Y g:i a', strtotime($story['created_on'])) . '</span>
+                        date('n/j/Y g:i a', strtotime($story['created_on'])) . '</span>
                 ' . $comment['comment'] . '</div>
             ';
         }
-        
+
         require_once __BASE_DIR__ . 'src/views/layout.phtml';
-        
+
     }
-    
-    public function create() {
-        if(!isset($_SESSION['AUTHENTICATED'])) {
+
+    public function create()
+    {
+        if (!isset($_SESSION['AUTHENTICATED'])) {
             header("Location: /user/login");
             exit;
         }
-        
+
         $error = '';
-        if(isset($_POST['create'])) {
-            if(!isset($_POST['headline']) || !isset($_POST['url']) ||
-               !filter_input(INPUT_POST, 'url', FILTER_VALIDATE_URL)) {
-                $error = 'You did not fill in all the fields or the URL did not validate.';       
-            } else {
-                $sql = 'INSERT INTO story (headline, url, created_by, created_on) VALUES (?, ?, ?, NOW())';
-                $stmt = $this->db->prepare($sql);
-                $stmt->execute(array(
-                   $_POST['headline'],
-                   $_POST['url'],
-                   $_SESSION['username'],
-                ));
-                
-                $id = $this->db->lastInsertId();
+
+        if(isset($_POST['create']))  {
+            $this->storyModel->set([
+                $_POST['headline'],
+                $_POST['url'],
+                $_SESSION['username'],
+            ]);
+
+            if($this->storyModel->validate()) {
+                $id = $this->storyModel->create();
                 header("Location: /story/?id=$id");
                 exit;
             }
+
+            $error = $this->storyModel->errors();
+
         }
-        
+
         $content = '
             <form method="post">
                 ' . $error . '<br />
@@ -98,8 +97,8 @@ class StoryController {
                 <input type="submit" name="create" value="Create" />
             </form>
         ';
-        
+
         require_once __BASE_DIR__ . 'src/views/layout.phtml';
     }
-    
+
 }
