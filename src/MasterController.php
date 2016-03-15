@@ -31,7 +31,7 @@ class MasterController {
         $ruri = $_SERVER['REQUEST_URI'];
         $path = str_replace($rb, '', $ruri);
         $return = array();
-        
+
         foreach($this->config['routes'] as $k => $v) {
             $matches = array();
             $pattern = '$' . $k . '$';
