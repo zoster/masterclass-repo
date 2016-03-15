@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Controllers;
 
 use PDO;
 
-class Index {
+class IndexController {
     
     protected $db;
     
@@ -40,7 +40,7 @@ class Index {
         
         $content .= '</ol>';
         
-        require 'templates/layout.phtml';
+        require __BASE_DIR__ . 'src/views/layout.phtml';
     }
 }
 

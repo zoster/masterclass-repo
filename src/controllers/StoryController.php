@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Controllers;
 
 use PDO;
 
-class Story {
+class StoryController {
     
     public function __construct($config) {
         $dbconfig = $config['database'];
@@ -59,7 +59,7 @@ class Story {
             ';
         }
         
-        require_once 'templates/layout.phtml';
+        require_once __BASE_DIR__ . 'src/views/layout.phtml';
         
     }
     
@@ -99,7 +99,7 @@ class Story {
             </form>
         ';
         
-        require_once 'templates/layout.phtml';
+        require_once __BASE_DIR__ . 'src/views/layout.phtml';
     }
     
 }

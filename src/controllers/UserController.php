@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Controllers;
 
 use PDO;
 
-class User {
+class UserController {
     
     public $db;
     
@@ -73,7 +73,7 @@ class User {
             </form>
         ';
         
-        require_once 'templates/layout.phtml';
+        require_once __BASE_DIR__ . 'src/views/layout.phtml';
         
     }
     
@@ -118,7 +118,7 @@ class User {
             <input type="submit" name="updatepw" value="Create User" />
         </form>';
         
-        require_once 'templates/layout.phtml';
+        require_once __BASE_DIR__ . 'src/views/layout.phtml';
     }
     
     public function login() {
@@ -153,7 +153,7 @@ class User {
             </form>
         ';
         
-        require_once('templates/layout.phtml');
+        require_once(__BASE_DIR__ . 'src/views/layout.phtml');
         
     }
     
