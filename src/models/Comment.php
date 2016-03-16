@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\CommentNotSavedException;
 use PDO;
 
 class Comment
@@ -20,4 +21,15 @@ class Comment
         return $comments->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function create(array $comment) {
+        $sql = 'INSERT INTO comment (created_by, created_on, story_id, comment) VALUES (?, NOW(), ?, ?)';
+        $stmt = $this->db->prepare($sql);
+        if( !$stmt->execute([
+            $comment['created_by'],
+            $comment['story_id'],
+            $comment['comment']
+        ]) ) {
+            throw new CommentNotSavedException();
+        }
+    }
 }

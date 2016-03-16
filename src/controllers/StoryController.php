@@ -71,14 +71,14 @@ class StoryController
 
         $error = '';
 
-        if(isset($_POST['create']))  {
+        if (isset($_POST['create'])) {
             $this->storyModel->set([
-                $_POST['headline'],
-                $_POST['url'],
-                $_SESSION['username'],
+                'headline' => $_POST['headline'],
+                'url' => $_POST['url'],
+                'created_by' => $_SESSION['username'],
             ]);
 
-            if($this->storyModel->validate()) {
+            if ($this->storyModel->validate()) {
                 $id = $this->storyModel->create();
                 header("Location: /story/?id=$id");
                 exit;

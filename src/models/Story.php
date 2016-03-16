@@ -44,6 +44,17 @@ class Story {
     }
 
     /**
+     * @return array
+     */
+    public function index()
+    {
+        $sql = 'SELECT * FROM story ORDER BY created_on DESC';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * @param array $story
      *
      * @return string
@@ -57,7 +68,11 @@ class Story {
 
         try{
             $stmt = $this->db->prepare('INSERT INTO story (headline, url, created_by, created_on) VALUES (?, ?, ?, NOW())');
-            $stmt->execute($this->story);
+            $stmt->execute([
+                $this->story['headline'],
+                $this->story['url'],
+                $this->story['created_by'],
+            ]);
         }catch(\PDOException $e) {
             //log $e somewhere
             throw new StoryNotSavedException();
