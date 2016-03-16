@@ -1,5 +1,9 @@
 <?php
- 
+
+namespace App;
+
+use PDO;
+
 class Index {
     
     protected $db;
@@ -36,7 +40,7 @@ class Index {
         
         $content .= '</ol>';
         
-        require 'layout.phtml';
+        require 'templates/layout.phtml';
     }
 }
 

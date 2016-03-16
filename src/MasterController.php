@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 class MasterController {
     
     private $config;
@@ -13,6 +15,7 @@ class MasterController {
         $call_class = $call['call'];
         $class = ucfirst(array_shift($call_class));
         $method = array_shift($call_class);
+
         $o = new $class($this->config);
         return $o->$method();
     }
@@ -28,7 +31,7 @@ class MasterController {
         $ruri = $_SERVER['REQUEST_URI'];
         $path = str_replace($rb, '', $ruri);
         $return = array();
-        
+
         foreach($this->config['routes'] as $k => $v) {
             $matches = array();
             $pattern = '$' . $k . '$';
@@ -37,7 +40,7 @@ class MasterController {
                 $controller_details = $v;
                 $path_string = array_shift($matches);
                 $arguments = $matches;
-                $controller_method = explode('/', $controller_details);
+                $controller_method = explode('@', $controller_details);
                 $return = array('call' => $controller_method);
             }
         }
