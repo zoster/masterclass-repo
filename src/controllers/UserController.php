@@ -3,17 +3,22 @@
 namespace App\Controllers;
 
 use App\Models\User;
-use PDO;
 
 class UserController {
 
+    /** @var User */
     protected $userModel;
 
+    /**
+     * UserController constructor.
+     *
+     * @param User $userModel
+     */
     public function __construct(User $userModel)
     {
         $this->userModel = $userModel;
     }
-    
+
     public function create() {
         $error = null;
         
@@ -52,7 +57,7 @@ class UserController {
         require_once __BASE_DIR__ . 'templates/layout.phtml';
         
     }
-    
+
     public function account() {
         $error = null;
         if(!isset($_SESSION['AUTHENTICATED'])) {
@@ -98,10 +103,7 @@ class UserController {
         // Do the login
         if(isset($_POST['login'])) {
 
-            if($this->userModel->authenticate([
-                'username' => $_POST['user'],
-                'password' => $_POST['pass']
-            ])) {
+            if($this->userModel->authenticate($_POST['user'], $_POST['pass'])) {
                 $_SESSION['AUTHENTICATED'] = true;
                 $_SESSION['username'] = $_POST['user'];
                 header("Location: /");

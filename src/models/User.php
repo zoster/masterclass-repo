@@ -7,14 +7,27 @@ use PDO;
 
 class User
 {
+    /** @var  array */
     protected $user;
+
+    /** @var PDO */
     protected $db;
 
+    /**
+     * User constructor.
+     *
+     * @param PDO $pdo
+     */
     public function __construct(PDO $pdo)
     {
         $this->db = $pdo;
     }
 
+    /**
+     * @param $username
+     *
+     * @return array|false
+     */
     public function show($username)
     {
         $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ?');
@@ -22,13 +35,12 @@ class User
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function create(array $user = null)
+    /**
+     * @return string
+     * @throws UserNotSavedException
+     */
+    public function create()
     {
-
-        if ($user) {
-            $this->user = $user;
-        }
-
         try {
             $stmt = $this->db->prepare('INSERT INTO user (username, email, password) VALUES (?, ?, ?)');
             $stmt->execute([
@@ -44,6 +56,12 @@ class User
         return $this->db->lastInsertId();
     }
 
+    /**
+     * @param $username
+     * @param $password
+     *
+     * @return bool
+     */
     public function update($username, $password)
     {
         $stmt = $this->db->prepare('UPDATE user SET password = ? WHERE username = ?');
@@ -53,11 +71,19 @@ class User
             ));
     }
 
+    /**
+     * @param array $user
+     */
     public function set(array $user)
     {
         $this->user = $user;
     }
 
+    /**
+     * @param bool $forUpdate
+     *
+     * @return bool|string
+     */
     public function errors($forUpdate = false)
     {
         if (empty($this->user['username']) || empty($this->user['password']) ||
@@ -89,15 +115,24 @@ class User
         return false;
     }
 
+    /**
+     * @param bool $forUpdate
+     *
+     * @return bool
+     */
     public function validate($forUpdate = false)
     {
         return !$this->errors($forUpdate);
     }
 
-    public function authenticate(array $auth)
+    /**
+     * @param $username
+     * @param $password
+     *
+     * @return bool
+     */
+    public function authenticate($username, $password)
     {
-        $username = $auth['username'];
-        $password = $auth['password'];
         $password = md5($username . $password); // THIS IS NOT SECURE. DO NOT USE IN PRODUCTION.
         $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ? AND password = ? LIMIT 1');
         $stmt->execute(array($username, $password));

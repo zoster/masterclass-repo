@@ -7,7 +7,11 @@ use PDO;
 
 class Comment
 {
+    /** @var PDO  */
     protected $db;
+
+    /** @var array */
+    protected $comment;
 
     /**
      * Comment constructor.
@@ -31,18 +35,20 @@ class Comment
         return $comments->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function set(array $comment) {
+        $this->comment = $comment;
+    }
+
     /**
-     * @param array $comment
-     *
      * @throws CommentNotSavedException
      */
-    public function create(array $comment) {
+    public function create() {
         $sql = 'INSERT INTO comment (created_by, created_on, story_id, comment) VALUES (?, NOW(), ?, ?)';
         $stmt = $this->db->prepare($sql);
         if( !$stmt->execute([
-            $comment['created_by'],
-            $comment['story_id'],
-            $comment['comment']
+            $this->comment['created_by'],
+            $this->comment['story_id'],
+            $this->comment['comment']
         ]) ) {
             throw new CommentNotSavedException();
         }

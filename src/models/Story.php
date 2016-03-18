@@ -56,18 +56,11 @@ class Story
     }
 
     /**
-     * @param array $story
-     *
      * @return string
      * @throws StoryNotSavedException
      */
-    public function create(array $story = null)
+    public function create()
     {
-
-        if ($story) {
-            $this->story = $story;
-        }
-
         try {
             $stmt = $this->db->prepare('INSERT INTO story (headline, url, created_by, created_on) VALUES (?, ?, ?, NOW())');
             $stmt->execute([
@@ -83,11 +76,17 @@ class Story
         return $this->db->lastInsertId();
     }
 
+    /**
+     * @param array $story
+     */
     public function set(array $story)
     {
         $this->story = $story;
     }
 
+    /**
+     * @return bool|string
+     */
     public function errors()
     {
         if (!isset($this->story['headline'])
@@ -100,6 +99,9 @@ class Story
         return false;
     }
 
+    /**
+     * @return bool
+     */
     public function validate()
     {
         return !$this->errors($this->story);
