@@ -90,7 +90,10 @@ class Story
 
     public function errors()
     {
-        if (!isset($this->story['headline']) || !isset($this->story['url']) || !filter_input(INPUT_POST, 'url', FILTER_VALIDATE_URL)) {
+        if (!isset($this->story['headline'])
+            || !isset($this->story['url'])
+            || !filter_var($this->story['url'], FILTER_VALIDATE_URL)
+        ) {
             return 'You did not fill in all the fields or the URL did not validate.';
         }
 

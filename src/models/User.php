@@ -15,10 +15,10 @@ class User
         $this->db = $pdo;
     }
 
-    public function showMe()
+    public function show($username)
     {
         $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ?');
-        $stmt->execute(array($_SESSION['username']));
+        $stmt->execute(array($username));
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -44,12 +44,12 @@ class User
         return $this->db->lastInsertId();
     }
 
-    public function updateMe($password)
+    public function update($username, $password)
     {
         $stmt = $this->db->prepare('UPDATE user SET password = ? WHERE username = ?');
         return $stmt->execute(array(
-                md5($_SESSION['username'] . $_POST['password']), // THIS IS NOT SECURE.
-                $_SESSION['username'],
+                md5($username . $password), // THIS IS NOT SECURE.
+                $username,
             ));
     }
 
@@ -103,9 +103,6 @@ class User
         $stmt->execute(array($username, $password));
 
         if((bool)$stmt->rowCount()) {
-
-            $_SESSION['AUTHENTICATED'] = true;
-            $_SESSION['username'] = $username;
             return true;
         }
 

@@ -70,12 +70,12 @@ class UserController {
             $this->userModel->validate(true);
 
 
-            $this->userModel->updateMe($_POST['password']);
+            $this->userModel->update($_SESSION['username'], $_POST['password']);
 
             $error = 'Your password was changed.';
         }
 
-        $details = $this->userModel->showMe();
+        $details = $this->userModel->show($_SESSION['username']);
         
         $content = '
         ' . $error . '<br />
@@ -102,6 +102,8 @@ class UserController {
                 'username' => $_POST['user'],
                 'password' => $_POST['pass']
             ])) {
+                $_SESSION['AUTHENTICATED'] = true;
+                $_SESSION['username'] = $_POST['user'];
                 header("Location: /");
                 exit;
             }
