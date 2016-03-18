@@ -10,9 +10,9 @@ class CommentController
 
     protected $commentModel;
 
-    public function __construct($config)
+    public function __construct(Comment $commentModel)
     {
-        $this->commentModel = new Comment($config);
+        $this->commentModel = $commentModel;
     }
 
     public function create()

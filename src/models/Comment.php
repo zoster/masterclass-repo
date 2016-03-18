@@ -7,20 +7,35 @@ use PDO;
 
 class Comment
 {
-    public function __construct($config) {
-        $dbconfig = $config['database'];
-        $dsn = 'mysql:host=' . $dbconfig['host'] . ';dbname=' . $dbconfig['name'];
-        $this->db = new PDO($dsn, $dbconfig['user'], $dbconfig['pass']);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    protected $db;
+
+    /**
+     * Comment constructor.
+     *
+     * @param PDO $db
+     */
+    public function __construct(PDO $db)
+    {
+        $this->db = $db;
     }
 
-    public function byStory($story_id)
+    /**
+     * @param $story_id
+     *
+     * @return array
+     */
+    public function byStoryId($story_id)
     {
         $comments = $this->db->prepare('SELECT * FROM comment WHERE story_id = ?');
         $comments->execute(array($story_id));
         return $comments->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param array $comment
+     *
+     * @throws CommentNotSavedException
+     */
     public function create(array $comment) {
         $sql = 'INSERT INTO comment (created_by, created_on, story_id, comment) VALUES (?, NOW(), ?, ?)';
         $stmt = $this->db->prepare($sql);

@@ -11,10 +11,10 @@ class IndexController
     protected $storyModel;
     protected $commentModel;
 
-    public function __construct($config)
+    public function __construct(Story $storyModel, Comment $commentModel)
     {
-        $this->storyModel   = new Story($config);
-        $this->commentModel = new Comment($config);
+        $this->storyModel   = $storyModel;
+        $this->commentModel = $commentModel;
     }
 
     public function index()
@@ -25,7 +25,7 @@ class IndexController
         $content = '<ol>';
 
         foreach ($stories as $story) {
-            $comments = $this->commentModel->byStory($story['id']);
+            $comments = $this->commentModel->byStoryId($story['id']);
 
             $content .= '
                 <li>
@@ -38,7 +38,7 @@ class IndexController
 
         $content .= '</ol>';
 
-        require __BASE_DIR__ . 'src/views/layout.phtml';
+        require __BASE_DIR__ . 'templates/layout.phtml';
     }
 }
 

@@ -1,5 +1,5 @@
 Homestead.yaml
 vendor/
-config.php
+config/config.php
 .vagrant
 .idea

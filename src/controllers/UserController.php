@@ -9,9 +9,9 @@ class UserController {
 
     protected $userModel;
 
-    public function __construct($config)
+    public function __construct(User $userModel)
     {
-        $this->userModel = new User($config);
+        $this->userModel = $userModel;
     }
     
     public function create() {
@@ -49,7 +49,7 @@ class UserController {
             </form>
         ';
         
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
         
     }
     
@@ -90,7 +90,7 @@ class UserController {
             <input type="submit" name="updatepw" value="Create User" />
         </form>';
         
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
     }
     
     public function login() {
@@ -117,7 +117,7 @@ class UserController {
             </form>
         ';
         
-        require_once(__BASE_DIR__ . 'src/views/layout.phtml');
+        require_once(__BASE_DIR__ . 'templates/layout.phtml');
         
     }
     
