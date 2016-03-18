@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Controllers;
 
 class MasterController {
     
@@ -38,8 +38,6 @@ class MasterController {
             if(preg_match($pattern, $path, $matches))
             {
                 $controller_details = $v;
-                $path_string = array_shift($matches);
-                $arguments = $matches;
                 $controller_method = explode('@', $controller_details);
                 $return = array('call' => $controller_method);
             }
