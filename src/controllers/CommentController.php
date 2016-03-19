@@ -22,19 +22,27 @@ class CommentController
             exit;
         }
 
+        $error = '';
+
         $this->commentModel->set([
             'story_id'   => $_POST['story_id'],
             'created_by' => $_SESSION['username'],
             'comment'    => filter_input(INPUT_POST, 'comment', FILTER_SANITIZE_FULL_SPECIAL_CHARS),
         ]);
 
-        //validation??
-        
-        $this->commentModel->create();
+        $error = $this->commentModel->errors();
 
-        //catch CommentNotSavedException and show an error
+        if($this->commentModel->validate()) {
+            try {
+                $this->commentModel->create();
+            } catch (CommentNotSavedException $e) {
+                $error = "Comment failed to save, please try again";
+            }
+        }
 
-        header("Location: /story/?id=" . $_POST['story_id']);
+        $_SESSION['error'] = $error;
+
+        header("Location: /story?id=" . $_POST['story_id']);
     }
 
 }

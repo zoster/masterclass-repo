@@ -74,7 +74,6 @@ class UserController {
 
             $this->userModel->validate(true);
 
-
             $this->userModel->update($_SESSION['username'], $_POST['password']);
 
             $error = 'Your password was changed.';

@@ -8,7 +8,6 @@ use App\Models\Comment;
 
 class StoryController
 {
-
     protected $storyModel;
     protected $commentModel;
 
@@ -23,6 +22,12 @@ class StoryController
         if (!isset($_GET['id'])) {
             header("Location: /");
             exit;
+        }
+
+        $error = '';
+        if(isset($_SESSION['error'])) {
+            $error = $_SESSION['error'];
+            unset($_SESSION['error']);
         }
 
         try {
@@ -43,6 +48,7 @@ class StoryController
         if (isset($_SESSION['AUTHENTICATED'])) {
             $content .= '
             <form method="post" action="/comment/create">
+            ' . $error . '<br />
             <input type="hidden" name="story_id" value="' . $_GET['id'] . '" />
             <textarea cols="60" rows="6" name="comment"></textarea><br />
             <input type="submit" name="submit" value="Submit Comment" />
@@ -80,7 +86,7 @@ class StoryController
 
             if ($this->storyModel->validate()) {
                 $id = $this->storyModel->create();
-                header("Location: /story/?id=$id");
+                header("Location: /story?id=$id");
                 exit;
             }
 

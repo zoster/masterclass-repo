@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use PDO;
+use App\Dbal\Mysql;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\StoryNotFoundException;
 use App\Exceptions\StoryNotSavedException;
 
-class Story
+class Story implements Model
 {
 
     /** @var array */
@@ -16,11 +17,12 @@ class Story
     /**
      * Story constructor.
      *
-     * @param PDO $db
+     * @param Mysql $db
      */
-    public function __construct(PDO $db)
+    public function __construct(Mysql $db)
     {
         $this->db = $db;
+        $this->db->setTable('story');
     }
 
     /**
@@ -31,16 +33,11 @@ class Story
      */
     public function show($id)
     {
-
-        $story = $this->db->prepare('SELECT * FROM story WHERE id = ?');
-        $story->execute([$id]);
-
-        if ($story->rowCount() < 1) {
+        try {
+            return $this->db->fetchOne($id);
+        }catch (NotFoundException $e) {
             throw new StoryNotFoundException();
         }
-
-        return $story->fetch(PDO::FETCH_ASSOC);
-
     }
 
     /**
@@ -48,11 +45,7 @@ class Story
      */
     public function index()
     {
-        $sql  = 'SELECT * FROM story ORDER BY created_on DESC';
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->db->fetchAll();
     }
 
     /**
@@ -62,18 +55,11 @@ class Story
     public function create()
     {
         try {
-            $stmt = $this->db->prepare('INSERT INTO story (headline, url, created_by, created_on) VALUES (?, ?, ?, NOW())');
-            $stmt->execute([
-                $this->story['headline'],
-                $this->story['url'],
-                $this->story['created_by'],
-            ]);
+            return $this->db->insert($this->story);
         } catch (\PDOException $e) {
             //log $e somewhere
             throw new StoryNotSavedException();
         }
-
-        return $this->db->lastInsertId();
     }
 
     /**

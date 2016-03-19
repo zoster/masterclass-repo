@@ -13,16 +13,20 @@ $container['PDO'] = function ($container) use ($config) {
     return $pdo;
 };
 
+$container['App\Dbal\Mysql'] = $container->factory(function ($container) {
+    return new \App\Dbal\Mysql($container['PDO']);
+});
+
 $container['App\Models\Comment'] = function ($container) {
-    return new \App\Models\Comment($container['PDO']);
+    return new \App\Models\Comment($container['App\Dbal\Mysql']);
 };
 
 $container['App\Models\Story'] = function ($container) {
-    return new \App\Models\Story($container['PDO']);
+    return new \App\Models\Story($container['App\Dbal\Mysql']);
 };
 
 $container['App\Models\User'] = function ($container) {
-    return new \App\Models\User($container['PDO']);
+    return new \App\Models\User($container['App\Dbal\Mysql']);
 };
 
 $container['App\Controllers\CommentController'] = function ($container) {

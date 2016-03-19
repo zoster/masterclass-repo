@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Dbal\Mysql;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\UserNotSavedException;
 use PDO;
 
-class User
+class User implements Model
 {
     /** @var  array */
     protected $user;
@@ -16,11 +18,12 @@ class User
     /**
      * User constructor.
      *
-     * @param PDO $pdo
+     * @param Mysql $pdo
      */
-    public function __construct(PDO $pdo)
+    public function __construct(Mysql $pdo)
     {
         $this->db = $pdo;
+        $this->db->setTable('user');
     }
 
     /**
@@ -30,9 +33,7 @@ class User
      */
     public function show($username)
     {
-        $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ?');
-        $stmt->execute(array($username));
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->db->fetchOne($username, 'username');
     }
 
     /**
@@ -42,18 +43,17 @@ class User
     public function create()
     {
         try {
-            $stmt = $this->db->prepare('INSERT INTO user (username, email, password) VALUES (?, ?, ?)');
-            $stmt->execute([
-                $this->user['username'],
-                $this->user['email'],
-                md5($this->user['username'] . $this->user['password'])
-            ]);
-        } catch (\PDOException $e) {
+            $insert = [
+                'username' => $this->user['username'],
+                'email'    => $this->user['email'],
+                'password' => md5($this->user['username'] . $this->user['password']),
+            ];
+
+            return $this->db->insert($insert);
+        } catch (NotFoundException $e) {
             //log $e somewhere
             throw new UserNotSavedException();
         }
-
-        return $this->db->lastInsertId();
     }
 
     /**
@@ -64,11 +64,7 @@ class User
      */
     public function update($username, $password)
     {
-        $stmt = $this->db->prepare('UPDATE user SET password = ? WHERE username = ?');
-        return $stmt->execute(array(
-                md5($username . $password), // THIS IS NOT SECURE.
-                $username,
-            ));
+        return $this->db->update(['username' => $username], ['password' => md5($username . $password)]);
     }
 
     /**
@@ -96,23 +92,22 @@ class User
             return "Your passwords didn't match.";
         }
 
-        if(!$forUpdate){
+        if (!$forUpdate) {
             if (empty($this->user['email'])) {
                 return 'You did not fill in all required fields.';
             }
-            if (!filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL)) {
+            if (!filter_var($this->user['email'], FILTER_VALIDATE_EMAIL)) {
                 return 'Your email address is invalid';
             }
 
-            $existing_user = $this->db->prepare('SELECT * FROM user WHERE username = ?');
-            $existing_user->execute([$_POST['username']]);
-            if ($existing_user->rowCount() > 0) {
-                return 'Your chosen username already exists. Please choose another.';
+            try {
+                $this->db->fetchOne($this->user['username'], 'username');
+            } catch (NotFoundException $e) {
+                return false;
             }
+
+            return 'Your chosen username already exists. Please choose another.';
         }
-
-
-        return false;
     }
 
     /**
@@ -133,11 +128,14 @@ class User
      */
     public function authenticate($username, $password)
     {
-        $password = md5($username . $password); // THIS IS NOT SECURE. DO NOT USE IN PRODUCTION.
-        $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ? AND password = ? LIMIT 1');
-        $stmt->execute(array($username, $password));
+        try {
+            $user = $this->db->fetchOne($username, 'username');
+        } catch (NotFoundException $e) {
+            dd('here');
+            return false;
+        }
 
-        if((bool)$stmt->rowCount()) {
+        if ($user['password'] == md5($username . $password)) {
             return true;
         }
 
