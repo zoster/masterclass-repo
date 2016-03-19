@@ -61,6 +61,7 @@ CREATE TABLE `user` (
   `username` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `created_on` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username_unique_upvotenews` (`username`)
 ) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;

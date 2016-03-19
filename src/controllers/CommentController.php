@@ -10,9 +10,9 @@ class CommentController
 
     protected $commentModel;
 
-    public function __construct($config)
+    public function __construct(Comment $commentModel)
     {
-        $this->commentModel = new Comment($config);
+        $this->commentModel = $commentModel;
     }
 
     public function create()
@@ -22,17 +22,27 @@ class CommentController
             exit;
         }
 
-        //validation??
+        $error = '';
 
-        $this->commentModel->create([
+        $this->commentModel->set([
             'story_id'   => $_POST['story_id'],
             'created_by' => $_SESSION['username'],
             'comment'    => filter_input(INPUT_POST, 'comment', FILTER_SANITIZE_FULL_SPECIAL_CHARS),
         ]);
 
-        //catch CommentNotSavedException and show an error
+        $error = $this->commentModel->errors();
 
-        header("Location: /story/?id=" . $_POST['story_id']);
+        if($this->commentModel->validate()) {
+            try {
+                $this->commentModel->create();
+            } catch (CommentNotSavedException $e) {
+                $error = "Comment failed to save, please try again";
+            }
+        }
+
+        $_SESSION['error'] = $error;
+
+        header("Location: /story?id=" . $_POST['story_id']);
     }
 
 }

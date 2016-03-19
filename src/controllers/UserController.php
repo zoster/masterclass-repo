@@ -3,17 +3,22 @@
 namespace App\Controllers;
 
 use App\Models\User;
-use PDO;
 
 class UserController {
 
+    /** @var User */
     protected $userModel;
 
-    public function __construct($config)
+    /**
+     * UserController constructor.
+     *
+     * @param User $userModel
+     */
+    public function __construct(User $userModel)
     {
-        $this->userModel = new User($config);
+        $this->userModel = $userModel;
     }
-    
+
     public function create() {
         $error = null;
         
@@ -49,10 +54,10 @@ class UserController {
             </form>
         ';
         
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
         
     }
-    
+
     public function account() {
         $error = null;
         if(!isset($_SESSION['AUTHENTICATED'])) {
@@ -69,13 +74,12 @@ class UserController {
 
             $this->userModel->validate(true);
 
-
-            $this->userModel->updateMe($_POST['password']);
+            $this->userModel->update($_SESSION['username'], $_POST['password']);
 
             $error = 'Your password was changed.';
         }
 
-        $details = $this->userModel->showMe();
+        $details = $this->userModel->show($_SESSION['username']);
         
         $content = '
         ' . $error . '<br />
@@ -90,7 +94,7 @@ class UserController {
             <input type="submit" name="updatepw" value="Create User" />
         </form>';
         
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
     }
     
     public function login() {
@@ -98,10 +102,9 @@ class UserController {
         // Do the login
         if(isset($_POST['login'])) {
 
-            if($this->userModel->authenticate([
-                'username' => $_POST['user'],
-                'password' => $_POST['pass']
-            ])) {
+            if($this->userModel->authenticate($_POST['user'], $_POST['pass'])) {
+                $_SESSION['AUTHENTICATED'] = true;
+                $_SESSION['username'] = $_POST['user'];
                 header("Location: /");
                 exit;
             }
@@ -117,7 +120,7 @@ class UserController {
             </form>
         ';
         
-        require_once(__BASE_DIR__ . 'src/views/layout.phtml');
+        require_once(__BASE_DIR__ . 'templates/layout.phtml');
         
     }
     

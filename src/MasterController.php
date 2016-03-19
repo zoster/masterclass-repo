@@ -1,13 +1,19 @@
 <?php
 
-namespace App\Controllers;
+namespace App;
+
+use Pimple\Container;
 
 class MasterController {
     
-    private $config;
-    
-    public function __construct($config) {
-        $this->_setupConfig($config);
+    private $routes;
+
+    /** @var  Container */
+    private $container;
+
+    public function __construct(array $routes, Container $container) {
+        $this->routes = $routes;
+        $this->container = $container;
     }
     
     public function execute() {
@@ -16,7 +22,7 @@ class MasterController {
         $class = ucfirst(array_shift($call_class));
         $method = array_shift($call_class);
 
-        $o = new $class($this->config);
+        $o = $this->container[$class];
         return $o->$method();
     }
     
@@ -32,7 +38,7 @@ class MasterController {
         $path = str_replace($rb, '', $ruri);
         $return = array();
 
-        foreach($this->config['routes'] as $k => $v) {
+        foreach($this->routes as $k => $v) {
             $matches = array();
             $pattern = '$' . $k . '$';
             if(preg_match($pattern, $path, $matches))
@@ -45,9 +51,4 @@ class MasterController {
         
         return $return;
     }
-    
-    private function _setupConfig($config) {
-        $this->config = $config;
-    }
-    
 }

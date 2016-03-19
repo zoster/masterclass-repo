@@ -8,14 +8,13 @@ use App\Models\Comment;
 
 class StoryController
 {
-
     protected $storyModel;
     protected $commentModel;
 
-    public function __construct($config)
+    public function __construct(Story $storyModel, Comment $commentModel)
     {
-        $this->storyModel   = new Story($config);
-        $this->commentModel = new Comment($config);
+        $this->storyModel   = $storyModel;
+        $this->commentModel = $commentModel;
     }
 
     public function index()
@@ -25,6 +24,12 @@ class StoryController
             exit;
         }
 
+        $error = '';
+        if(isset($_SESSION['error'])) {
+            $error = $_SESSION['error'];
+            unset($_SESSION['error']);
+        }
+
         try {
             $story = $this->storyModel->show((int)$_GET['id']);
         } catch (StoryNotFoundException $e) {
@@ -32,7 +37,7 @@ class StoryController
             exit;
         }
 
-        $comments = $this->commentModel->byStory($story['id']);
+        $comments = $this->commentModel->byStoryId($story['id']);
 
         $content = '
             <a class="headline" href="' . $story['url'] . '">' . $story['headline'] . '</a><br />
@@ -43,6 +48,7 @@ class StoryController
         if (isset($_SESSION['AUTHENTICATED'])) {
             $content .= '
             <form method="post" action="/comment/create">
+            ' . $error . '<br />
             <input type="hidden" name="story_id" value="' . $_GET['id'] . '" />
             <textarea cols="60" rows="6" name="comment"></textarea><br />
             <input type="submit" name="submit" value="Submit Comment" />
@@ -58,7 +64,7 @@ class StoryController
             ';
         }
 
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
 
     }
 
@@ -80,7 +86,7 @@ class StoryController
 
             if ($this->storyModel->validate()) {
                 $id = $this->storyModel->create();
-                header("Location: /story/?id=$id");
+                header("Location: /story?id=$id");
                 exit;
             }
 
@@ -98,7 +104,7 @@ class StoryController
             </form>
         ';
 
-        require_once __BASE_DIR__ . 'src/views/layout.phtml';
+        require_once __BASE_DIR__ . 'templates/layout.phtml';
     }
 
 }

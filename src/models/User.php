@@ -2,65 +2,84 @@
 
 namespace App\Models;
 
+use App\Dbal\Mysql;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\UserNotSavedException;
 use PDO;
 
-class User
+class User implements Model
 {
+    /** @var  array */
     protected $user;
+
+    /** @var PDO */
     protected $db;
 
-    public function __construct($config)
+    /**
+     * User constructor.
+     *
+     * @param Mysql $pdo
+     */
+    public function __construct(Mysql $pdo)
     {
-        $dbconfig = $config['database'];
-        $dsn      = 'mysql:host=' . $dbconfig['host'] . ';dbname=' . $dbconfig['name'];
-        $this->db = new PDO($dsn, $dbconfig['user'], $dbconfig['pass']);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->db = $pdo;
+        $this->db->setTable('user');
     }
 
-    public function showMe()
+    /**
+     * @param $username
+     *
+     * @return array|false
+     */
+    public function show($username)
     {
-        $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ?');
-        $stmt->execute(array($_SESSION['username']));
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->db->fetchOne($username, 'username');
     }
 
-    public function create(array $user = null)
+    /**
+     * @return string
+     * @throws UserNotSavedException
+     */
+    public function create()
     {
-
-        if ($user) {
-            $this->user = $user;
-        }
-
         try {
-            $stmt = $this->db->prepare('INSERT INTO user (username, email, password) VALUES (?, ?, ?)');
-            $stmt->execute([
-                $this->user['username'],
-                $this->user['email'],
-                md5($this->user['username'] . $this->user['password'])
-            ]);
-        } catch (\PDOException $e) {
+            $insert = [
+                'username' => $this->user['username'],
+                'email'    => $this->user['email'],
+                'password' => md5($this->user['username'] . $this->user['password']),
+            ];
+
+            return $this->db->insert($insert);
+        } catch (NotFoundException $e) {
             //log $e somewhere
             throw new UserNotSavedException();
         }
-
-        return $this->db->lastInsertId();
     }
 
-    public function updateMe($password)
+    /**
+     * @param $username
+     * @param $password
+     *
+     * @return bool
+     */
+    public function update($username, $password)
     {
-        $stmt = $this->db->prepare('UPDATE user SET password = ? WHERE username = ?');
-        return $stmt->execute(array(
-                md5($_SESSION['username'] . $_POST['password']), // THIS IS NOT SECURE.
-                $_SESSION['username'],
-            ));
+        return $this->db->update(['username' => $username], ['password' => md5($username . $password)]);
     }
 
+    /**
+     * @param array $user
+     */
     public function set(array $user)
     {
         $this->user = $user;
     }
 
+    /**
+     * @param bool $forUpdate
+     *
+     * @return bool|string
+     */
     public function errors($forUpdate = false)
     {
         if (empty($this->user['username']) || empty($this->user['password']) ||
@@ -73,42 +92,50 @@ class User
             return "Your passwords didn't match.";
         }
 
-        if(!$forUpdate){
+        if (!$forUpdate) {
             if (empty($this->user['email'])) {
                 return 'You did not fill in all required fields.';
             }
-            if (!filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL)) {
+            if (!filter_var($this->user['email'], FILTER_VALIDATE_EMAIL)) {
                 return 'Your email address is invalid';
             }
 
-            $existing_user = $this->db->prepare('SELECT * FROM user WHERE username = ?');
-            $existing_user->execute([$_POST['username']]);
-            if ($existing_user->rowCount() > 0) {
-                return 'Your chosen username already exists. Please choose another.';
+            try {
+                $this->db->fetchOne($this->user['username'], 'username');
+            } catch (NotFoundException $e) {
+                return false;
             }
+
+            return 'Your chosen username already exists. Please choose another.';
         }
-
-
-        return false;
     }
 
+    /**
+     * @param bool $forUpdate
+     *
+     * @return bool
+     */
     public function validate($forUpdate = false)
     {
         return !$this->errors($forUpdate);
     }
 
-    public function authenticate(array $auth)
+    /**
+     * @param $username
+     * @param $password
+     *
+     * @return bool
+     */
+    public function authenticate($username, $password)
     {
-        $username = $auth['username'];
-        $password = $auth['password'];
-        $password = md5($username . $password); // THIS IS NOT SECURE. DO NOT USE IN PRODUCTION.
-        $stmt = $this->db->prepare('SELECT * FROM user WHERE username = ? AND password = ? LIMIT 1');
-        $stmt->execute(array($username, $password));
+        try {
+            $user = $this->db->fetchOne($username, 'username');
+        } catch (NotFoundException $e) {
+            dd('here');
+            return false;
+        }
 
-        if((bool)$stmt->rowCount()) {
-
-            $_SESSION['AUTHENTICATED'] = true;
-            $_SESSION['username'] = $username;
+        if ($user['password'] == md5($username . $password)) {
             return true;
         }
 

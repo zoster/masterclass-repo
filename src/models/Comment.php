@@ -2,33 +2,75 @@
 
 namespace App\Models;
 
+use App\Dbal\Mysql;
 use App\Exceptions\CommentNotSavedException;
-use PDO;
+use App\Exceptions\NotFoundException;
 
-class Comment
+class Comment implements Model
 {
-    public function __construct($config) {
-        $dbconfig = $config['database'];
-        $dsn = 'mysql:host=' . $dbconfig['host'] . ';dbname=' . $dbconfig['name'];
-        $this->db = new PDO($dsn, $dbconfig['user'], $dbconfig['pass']);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    }
+    /** @var Mysql */
+    protected $db;
 
-    public function byStory($story_id)
+    /** @var array */
+    protected $comment;
+
+    /**
+     * Comment constructor.
+     *
+     * @param Mysql $db
+     */
+    public function __construct(Mysql $db)
     {
-        $comments = $this->db->prepare('SELECT * FROM comment WHERE story_id = ?');
-        $comments->execute(array($story_id));
-        return $comments->fetchAll(PDO::FETCH_ASSOC);
+        $this->db = $db;
+        $this->db->setTable('comment');
     }
 
-    public function create(array $comment) {
-        $sql = 'INSERT INTO comment (created_by, created_on, story_id, comment) VALUES (?, NOW(), ?, ?)';
-        $stmt = $this->db->prepare($sql);
-        if( !$stmt->execute([
-            $comment['created_by'],
-            $comment['story_id'],
-            $comment['comment']
-        ]) ) {
+    /**
+     * @param $story_id
+     *
+     * @return array
+     */
+    public function byStoryId($story_id)
+    {
+        return $this->db->fetchMatching($story_id, 'story_id');
+    }
+
+    /**
+     * @param array $comment
+     */
+    public function set(array $comment)
+    {
+        $this->comment = $comment;
+    }
+
+    /**
+     * @return bool
+     */
+    public function errors()
+    {
+        if (empty(trim($this->comment['comment']))) {
+            return 'Please enter a comment';
+        }
+
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function validate()
+    {
+        return !$this->errors();
+    }
+
+    /**
+     * @throws CommentNotSavedException
+     */
+    public function create()
+    {
+        try {
+            $this->db->insert($this->comment);
+        } catch (NotFoundException $e) {
             throw new CommentNotSavedException();
         }
     }
